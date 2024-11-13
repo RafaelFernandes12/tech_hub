@@ -1,4 +1,3 @@
-import { products } from "./products";
 
 export interface sellsProps {
     id: number
@@ -6,5 +5,5 @@ export interface sellsProps {
     qtd: number;
     profit: number
     totalValue: number;
-    product: products;
+    productId: number;
 }

@@ -1,15 +1,25 @@
 import axios from "../lib/axios";
 
-export async function queryAllSells(startDate: Date | null, productId: number | null, totalValue: number | null, n: number){
+export async function queryAllSells(startDate: Date | null, productName: string | null, totalValue: number | null, n: number){
     const res = await axios.get(`/sells/page/${n}`, {
         params: {
             startDate,
-            productId,
+            productName,
             totalValue
         }
     })
     const data = await res.data
     return data
+}
+
+export async function findAllSells(startDate: Date | null, productName: string | null, totalValue: number | null){
+    return (await axios.get(`/findAllSells`, {
+        params: {
+            startDate,
+            productName,
+            totalValue
+        }
+    })).data
 }
 
 export async function createProduct(date: Date, productId: number, profit: number, qtd: number){

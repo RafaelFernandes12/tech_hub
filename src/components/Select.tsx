@@ -1,11 +1,10 @@
-import { useQuery } from "@tanstack/react-query";
+import { ReactNode } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { capitalizeFirstLetter } from "../utils/capitalizeWord";
 
 interface SelectProps {
   title: string
-  apiName: string
-  apiCall: () => Promise<string[]>;
+  children: ReactNode
+  page: 'sells' | 'products'
 }
 
 export function Select(props: SelectProps) {
@@ -14,33 +13,19 @@ export function Select(props: SelectProps) {
   const { n } = useParams<{ n: string }>()
   const pageNumber = n ? parseInt(n) : 1
 
-  const { data, isLoading, isError } = useQuery<string[]>({
-    queryKey: [`products/${props.apiName}`],
-    queryFn: () => props.apiCall(),
-  });
-
-  const options = data ? data : [];
-
   const handleNavigate = (query: string, location: string) => {
     const params = new URLSearchParams(window.location.search);
     params.set(query, location); 
-    navigate(`/products/${pageNumber}/?${params.toString()}`); 
+    navigate(`/${props.page}/${pageNumber}/?${params.toString()}`); 
   };
-
-  if (isLoading) return <p>Espere um minuto</p>;
-  if (isError) return <p>Um erro ocorreu, tente novamente mais tarde</p>;
 
   return (
     <select
       className="select select-bordered w-full max-w-xs"
-      onChange={(e) => handleNavigate(props.apiName, e.target.value)}
+      onChange={(e) => handleNavigate(props.title, e.target.value)}
     >
-      <option value=''>{props.apiName}</option>
-      {options.map((option) => (
-        <option key={option} value={option}>
-          {capitalizeFirstLetter(option)}
-        </option>
-      ))}
+      <option value=''>{props.title}</option>
+        {props.children}
     </select>
   );
 }

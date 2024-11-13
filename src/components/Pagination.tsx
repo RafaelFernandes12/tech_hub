@@ -1,25 +1,18 @@
-import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { getPageParam } from "../utils/getParams";
 
 interface PaginationProps {
+  data: any[]
   queryKey: string;
-  queryOptions: (string | null)[];
-  queryFn: (...args: (string | null)[]) => Promise<any>;
 }
 
-export function Pagination({ queryFn, queryKey, queryOptions }: PaginationProps) {
+export function Pagination({ data, queryKey }: PaginationProps) {
   const { n } = getPageParam();
   const pageNumber = n ? parseInt(n) : 1;
   const location = useLocation();
   const navigate = useNavigate();
   const currentSearchParams = new URLSearchParams(location.search);
-
-  const { data } = useQuery<any[]>({
-    queryKey: [`${queryKey}`, ...queryOptions],
-    queryFn: () => queryFn(...queryOptions),
-  });
 
   const dataSize = data ? Math.ceil(data.length / 20) : 1;
 

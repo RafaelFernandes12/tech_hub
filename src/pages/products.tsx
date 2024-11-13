@@ -28,6 +28,19 @@ export default function Products() {
       queryFn: () => queryAllProducts(product, category, manufacturer, pageNumber)
     })
 
+    const { data: categories } = useQuery<string[]>({
+      queryKey: ["/products/categories"],
+      queryFn: () => findAllCategories()
+    })
+    const { data: manufacturers } = useQuery<string[]>({
+      queryKey: ["products/manufacturers"],
+      queryFn: () => findAllManufactures()
+    })
+
+    const { data: paginationProducts } = useQuery<products[]>({
+      queryKey: ["products", product, category, manufacturer],
+      queryFn: () => findAllProducts(product, category, manufacturer)
+    })
     const products = data ? data : []
 
     const mutation = useMutation ({
@@ -42,8 +55,20 @@ export default function Products() {
       <main className='w-full'>
         <div className='flex gap-4 w-full items-center justify-between my-10'>
           <SearchBar />
-          <Select apiCall={findAllCategories} title={category ? category : categoryTitle} apiName={categoryTitle}/>
-          <Select apiCall={findAllManufactures} title={manufacturer ? manufacturer : manufacturerTitle} apiName={manufacturerTitle}/>
+          <Select title={category ? category : categoryTitle} page='products'>
+            {(categories || []).map((option) => (
+              <option key={option} value={option}>
+                {capitalizeFirstLetter(option)}
+              </option>
+            ))}
+            </Select>
+          <Select title={manufacturer ? manufacturer : manufacturerTitle} page='products'>
+            {(manufacturers || []).map((option) => (
+              <option key={option} value={option}>
+                {capitalizeFirstLetter(option)}
+              </option>
+            ))}
+          </Select>
           <Link to={`/products/${pageNumber}`} className='btn btn-primary'>Limpar</Link >
           <Button onClick={() => mutation.mutate()} title='Criar 10 produtos aleatórios'/>
           <Modal />
@@ -62,9 +87,8 @@ export default function Products() {
           })}
         </div>
         <Pagination
+          data={paginationProducts || []}
           queryKey="products"
-          queryOptions={[product, category, manufacturer]}
-          queryFn={(product, category, manufacturer) => findAllProducts(product, category, manufacturer)}
         />
 
     </main>
