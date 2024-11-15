@@ -1,6 +1,6 @@
 import { Bounce, toast } from "react-toastify";
 
-export function Toast({message} : {message: string}){
+export function ToastSuccess({message} : {message: string}){
     toast.success(message, {
         position: "top-center",
         autoClose: 5000,
@@ -11,5 +11,5 @@ export function Toast({message} : {message: string}){
         progress: undefined,
         theme: "colored",
         transition: Bounce,
-        });
+    });
 }

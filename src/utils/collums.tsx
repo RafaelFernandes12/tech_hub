@@ -25,15 +25,28 @@ export const productCollums: ColumnDef<(products)>[] = [
         cell: (props: any) => <p>{props.getValue()}</p>    
     },
     {
+        accessorKey: 'price',
+        header: () => <p className="text-center">Preço</p>,
+        enableSorting: true,
+        cell: (props: any) => <p className="text-center">R${props.getValue()}</p>    
+    },
+    {
+        accessorKey: 'totalValue',
+        header: () => <p className="text-center p-0 m-0">Valor total</p>,
+        enableSorting: true,
+        sortingFn: 'basic',
+        cell: (props: any) => <p className="text-center">R${props.getValue()}</p>    
+    },
+    {
         accessorKey: 'qtd',
         header: () => <p className="text-center">Quantidade</p>,
         enableSorting: true,
         sortingFn: 'basic',
-
         cell: (props: any) => <p className="text-center">{props.getValue()}</p>    
     }
 ]
-    export const sellsCollums: ColumnDef<(sells)>[] = [
+
+export const sellsCollums: ColumnDef<(sells)>[] = [
     {
         accessorKey: 'date',
         header: () => <p className="text-center">Data</p>,
@@ -48,14 +61,14 @@ export const productCollums: ColumnDef<(products)>[] = [
     },
     {
         accessorKey: 'qtd',
-        header: () => <p className="text-center">Quantidade</p>,
+        header: () => <p className="text-center p-0 m-0">Quantidade</p>,
         enableSorting: true,
         sortingFn: 'basic',
         cell: (props: any) => <p className="text-center">{props.getValue()}</p>    
     },
     {
         accessorKey: 'totalValue',
-        header: () => <p className="text-center">Valor total</p>,
+        header: () => <p className="text-center p-0 m-0">Valor total</p>,
         enableSorting: true,
         sortingFn: 'basic',
         cell: (props: any) => <p className="text-center">R${props.getValue()}</p>    
@@ -66,7 +79,6 @@ export const productCollums: ColumnDef<(products)>[] = [
         enableSorting: true,
         sortingFn: 'basic',
         cell: (props: any) => {
-
             const { data: product } = useQuery<products>({
                 queryKey: [`/products/${props.getValue()}`,],
                 queryFn: () => findOneProduct(props.getValue()),

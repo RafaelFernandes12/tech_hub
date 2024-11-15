@@ -1,22 +1,38 @@
 import axios from "../lib/axios";
 
-export async function queryAllProducts(name: string | null, category: string | null, manufacturer: string | null, n: number){
+type products = {
+    name: string | null
+    category: string | null
+    manufacturer: string | null
+    n: number
+    qtd: string | null
+    price: string | null
+    totalValue: string | null
+}
+type findAllProducts = Omit<products, 'n'>;
+export async function queryAllProducts({category, manufacturer, n, name, price, qtd, totalValue} : products){
     const res = await axios.get(`/products/page/${n}`, {
         params: {
             name,
             category,
-            manufacturer
+            manufacturer,
+            price,
+            qtd,
+            totalValue
         }
     })
     const data = await res.data
     return data
 }
-export async function findAllProducts(name: string | null, category: string | null, manufacturer: string | null){
+export async function findAllProducts({category, manufacturer, name, price, qtd, totalValue} : findAllProducts){
     return (await axios.get(`/products`, {
         params: {
             name,
             category,
-            manufacturer
+            manufacturer,
+            price,
+            qtd,
+            totalValue
         }
     })).data
 }

@@ -9,6 +9,8 @@ export function calculateStartDate(range: string): Date | null {
         return new Date(now.setMonth(now.getMonth() - 3));
       case 'lastYear':
         return new Date(now.setFullYear(now.getFullYear() - 1));
+      case 'lastThreeYear':
+        return new Date(now.setFullYear(now.getFullYear() - 3));
       default:
         return null;
     }

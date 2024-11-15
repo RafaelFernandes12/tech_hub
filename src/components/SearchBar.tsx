@@ -1,7 +1,7 @@
 import { KeyboardEvent, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-export function SearchBar() {
+export function SearchBar({to} : {to: string}) {
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
   const location = useLocation();
@@ -12,14 +12,14 @@ export function SearchBar() {
       if (searchTerm) queryParams.set('product', searchTerm);
       else queryParams.delete('product');
 
-      navigate(`/productsTable/1?${queryParams.toString()}`);
+      navigate(`/${to}/1?${queryParams.toString()}`);
     }
   };
 
   return (
     <input
       type="text"
-      placeholder="Search products"
+      placeholder="Pesquisar produto"
       className="input input-bordered w-full max-w-xs"
       value={searchTerm}
       onChange={(e) => setSearchTerm(e.target.value)}

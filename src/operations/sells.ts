@@ -3,9 +3,9 @@ import axios from "../lib/axios";
 type queryAllSells = {
     startDate: Date | null
     productName: string | null
-    totalValue: number | null
-    qtd: number | null
-    price: number | null
+    totalValue: string | null
+    qtd: string | null
+    price: string | null
     n: number
 }
 type findAllSells = Omit<queryAllSells, 'n'>;
