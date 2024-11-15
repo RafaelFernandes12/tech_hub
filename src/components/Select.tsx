@@ -1,22 +1,26 @@
 import { ReactNode } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { getPageParam } from "../utils/getParams";
 
 interface SelectProps {
-  title: string
+  title: string | null
   children: ReactNode
-  page: 'sells' | 'products'
+  page: 'sells' | 'products' | 'productsTable'
 }
 
 export function Select(props: SelectProps) {
   const navigate = useNavigate();
   
-  const { n } = useParams<{ n: string }>()
-  const pageNumber = n ? parseInt(n) : 1
+  const pageNumber = getPageParam()
 
-  const handleNavigate = (query: string, location: string) => {
+  const handleNavigate = (query: string | null, location: string) => {
     const params = new URLSearchParams(window.location.search);
-    params.set(query, location); 
-    navigate(`/${props.page}/${pageNumber}/?${params.toString()}`); 
+    if(query){
+      params.set(query, location); 
+      navigate(`/${props.page}/${pageNumber}/?${params.toString()}`); 
+    }
+    else if(query == 'category') params.delete('category'); 
+    else if(query == 'manufacturer') params.delete('manufacturer'); 
   };
 
   return (
@@ -24,7 +28,6 @@ export function Select(props: SelectProps) {
       className="select select-bordered w-full max-w-xs"
       onChange={(e) => handleNavigate(props.title, e.target.value)}
     >
-      <option value=''>{props.title}</option>
         {props.children}
     </select>
   );

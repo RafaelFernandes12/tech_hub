@@ -1,20 +1,25 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { getCoreRowModel, getFilteredRowModel, getSortedRowModel, SortingState, useReactTable } from '@tanstack/react-table';
+import { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { Button } from '../components/Button';
-import { Modal } from '../components/Modal';
 import { Pagination } from '../components/Pagination';
+import { PdfButton } from '../components/PdfButton';
 import { Select } from '../components/Select';
+import { TableData } from '../components/TableData';
 import { products } from '../models/products';
-import { sellsProps } from '../models/sells';
+import { sells } from '../models/sells';
 import { queryAllProducts } from '../operations/products';
 import { create10sells, findAllSells, queryAllSells } from '../operations/sells';
 import { calculateStartDate } from '../utils/calculateStartDate';
 import { capitalizeFirstLetter } from '../utils/capitalizeWord';
-import { getFullDate } from '../utils/getFullDate';
+import { sellsCollums } from '../utils/collums';
 import { getPageParam, getQueryParams } from '../utils/getParams';
 import { NotFound } from './notFound';
 
-const pricesRange = [500, 1000, 2000, 5000, 100000]
+const totalValuesRanges = [500, 1000, 2000, 5000, 100000]
+const priceRanges = [1, 5, 10, 20, 50, 100]
+const qtdRanges = [1, 2, 5, 7, 10]
 const dateRanges = [
   { label: 'Last Week', value: 'lastWeek' },
   { label: 'Last Month', value: 'lastMonth' },
@@ -23,89 +28,103 @@ const dateRanges = [
 ];
 
 export default function Sells() {
-  const { n } = getPageParam()
+  const pageNumber = getPageParam()
   const productName = getQueryParams('productName');
   const totalQuery = getQueryParams('totalValue');
   const dateRange = getQueryParams('startDate');
-  
+  const price = getQueryParams('price');
+  const qtd = getQueryParams('qtd');
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const location = useLocation()
   const totalValue = totalQuery ? parseInt(totalQuery) : null
   const startDate = dateRange ? calculateStartDate(dateRange) : null;
-  console.log(startDate)
-  const pageNumber = n ? parseInt(n) : 1;
-  const { data, isLoading, isError } = useQuery<sellsProps[]>({
-    queryKey: ['sells', productName, totalValue, dateRange, pageNumber],
-    queryFn: () => queryAllSells(startDate, productName, totalValue, pageNumber),
-  })
 
-  const { data: productsUndefined } = useQuery<products[]>({
+  const { data, isLoading, isError } = useQuery<sells[]>({
+    queryKey: ['sells', productName, totalValue, dateRange, pageNumber, price, qtd],
+    queryFn: () => queryAllSells({startDate, productName, totalValue, n: pageNumber, price: Number(price), qtd: Number(qtd)}),
+  })
+  const { data: products } = useQuery<products[]>({
     queryKey: ['/queryAllProducts', pageNumber],
     queryFn: () => queryAllProducts(null, null, null, pageNumber),
   });
 
-  const { data: paginationSells } = useQuery<sellsProps[]>({
+  const productsTitles = products ? products.map(p => p.name) : []
+
+  const { data: paginationSells } = useQuery<sells[]>({
     queryKey: ['sells'],
-    queryFn: () => findAllSells(null, null, null),
+    queryFn: () => findAllSells({startDate, productName, totalValue, price: Number(price), qtd: Number(qtd)}),
   });
   
-  const products = productsUndefined ? productsUndefined : []
-  const productsTitles = productsUndefined ? productsUndefined.map(p => p.name) : []
-  const productsIds = products.map((p) => p.id)
-
-
   const sells = data || [];
-  const mutation = useMutation({
-    mutationFn: () => create10sells(),
-  });
+
+  const table = useReactTable({
+    data: sells,
+    columns: sellsCollums,
+    getCoreRowModel: getCoreRowModel(),
+    manualPagination: true,
+    getSortedRowModel: getSortedRowModel(),
+    onSortingChange: setSorting,
+    getFilteredRowModel: getFilteredRowModel(),
+    state: {
+        sorting,
+      },
+});
 
   if (isLoading) return <p>Espere um minuto</p>;
   if (isError) return <NotFound />;
-  if (mutation.isPending) return <p>Adicionando produtos</p>;
 
   return (
     <main className="w-full">
       <div className="flex gap-4 w-full items-center justify-between my-10">
         <Select title='productName' page='sells'>
+          <option>Nome do produto</option>
           {(productsTitles || []).map((option) => (
                 <option key={option} value={option}>
                   {capitalizeFirstLetter(option)}
                 </option>
               ))}
-          </Select>
+        </Select>
         <Select title='totalValue' page='sells'>
-          {(pricesRange || []).map((option) => (
+        <option>Valor total da compra</option>
+          {(totalValuesRanges|| []).map((option) => (
                 <option key={option} value={option}>
                   {'> R$ ' + option}
                 </option>
           ))}
-          </Select>
-          <Select title="startDate" page="sells">
+        </Select>
+        <Select title="startDate" page="sells">
+          <option>Dia da compra</option>
             {dateRanges.map((range) => (
               <option key={range.value} value={range.value}>
                 {range.label}
               </option>
             ))}
-          </Select>
+        </Select>
+        <Select title="qtd" page="sells">
+          <option>Quantidade da compra</option>
+            {qtdRanges.map((range) => (
+              <option key={range} value={range}>
+                {range}
+              </option>
+            ))}
+        </Select>
+        <Select title="price" page="sells">
+          <option>Preço</option>
+            {priceRanges.map((range) => (
+              <option key={range} value={range}>
+                {range}
+              </option>
+            ))}
+        </Select>
         <Link to={`/sells/${pageNumber}`} className="btn btn-primary">Limpar</Link>
-        <Button onClick={() => mutation.mutate()} title="Criar 10 vendas aleatórios" />
-        <Modal />
+        <Button onClick={() => create10sells()} title="Criar 10 vendas aleatórios" />
+        <PdfButton to={`/sellsPrint/${location.search}`}/>
       </div>
-      <div className="grid grid-cols-4 gap-4">
-        {sells.map((s) => {
-
-          function getProductPrice(){
-            if(productsIds.includes(s.productId)) return products.find(p => p.id == s.productId)?.price
-            return ''
-          }
-          return (
-            <div key={s.id} className="card card-body flex flex-col p-2">
-              <span className="card-title">Data: {getFullDate(s.date)}</span>
-              <span>Preço do produto: {getProductPrice()}R$</span>
-              <span>Lucro: {s.profit * 100}%</span>
-              <span>Quantidade vendida: {s.qtd}</span>
-              <span>Valor total da compra: {s.totalValue}</span>
-            </div>
-          );
-        })}
+      <div>
+      {sells.length > 0 ?
+        <TableData table={table}/> : 
+        <p className="m-auto flex items-center justify-center mt-32">Não há nenhum produto</p>
+      }
       </div>
       <Pagination data={paginationSells || []} queryKey="sells" />
     </main>

@@ -1,68 +1,82 @@
-import { useMutation, useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
-import { Button } from '../components/Button'
-import { Modal } from '../components/Modal'
-import { Pagination } from '../components/Pagination'
-import { SearchBar } from '../components/SearchBar'
-import { Select } from '../components/Select'
-import { products } from '../models/products'
-import { create10Products, findAllCategories, findAllManufactures, findAllProducts, queryAllProducts } from '../operations/products'
-import { capitalizeFirstLetter } from '../utils/capitalizeWord'
-import { getPageParam, getQueryParams } from '../utils/getParams'
-import { NotFound } from './notFound'
+import { useQuery } from "@tanstack/react-query";
+import { getCoreRowModel, getFilteredRowModel, getSortedRowModel, SortingState, useReactTable } from "@tanstack/react-table";
+import { useState } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { Button } from "../components/Button";
+import { Pagination } from "../components/Pagination";
+import { PdfButton } from "../components/PdfButton";
+import { SearchBar } from "../components/SearchBar";
+import { Select } from "../components/Select";
+import { TableData } from "../components/TableData";
+import { products } from "../models/products";
+import { create10Products, findAllCategories, findAllManufactures, findAllProducts, queryAllProducts } from "../operations/products";
+import { capitalizeFirstLetter } from "../utils/capitalizeWord";
+import { productCollums } from "../utils/collums";
+import { getPageParam, getQueryParams } from "../utils/getParams";
 
 const categoryTitle = 'category'
 const manufacturerTitle = 'manufacturer'
 
 export default function Products() {
-  
-    const product = getQueryParams('product')
-    const category = getQueryParams('category')
-    const manufacturer = getQueryParams('manufacturer') 
-    const { n } = getPageParam()    
-    
-    const pageNumber = n ? parseInt(n) : 1
 
-    const { data, isLoading, isError } = useQuery<products[]>({
-      queryKey: ["products", product, category, manufacturer, pageNumber],
-      queryFn: () => queryAllProducts(product, category, manufacturer, pageNumber)
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const pageNumber = getPageParam()    
+  const location = useLocation()
+    const filters = {
+        product: getQueryParams('product'),
+        category: getQueryParams('category'),
+        manufacturer: getQueryParams('manufacturer'),
+        qtd: getQueryParams('qtd'),
+        price: getQueryParams('price'),  
+    };
+
+    const { data, isLoading } = useQuery<products[]>({
+        queryKey: ["products", filters.product, filters.category, filters.manufacturer, pageNumber],
+        queryFn: () => queryAllProducts(filters.product, filters.category, filters.manufacturer, pageNumber)
     })
+    const { data: dataPagination } = useQuery<products[]>({
+        queryKey: ["products", filters.product, filters.category, filters.manufacturer],
+        queryFn: () => findAllProducts(filters.product, filters.category, filters.manufacturer)
+      })
+      const { data: categories } = useQuery<string[]>({
+        queryKey: ["/products/categories"],
+        queryFn: () => findAllCategories()
+      })
+      const { data: manufacturers } = useQuery<string[]>({
+        queryKey: ["products/manufacturers"],
+        queryFn: () => findAllManufactures()
+      })
+      
+    const products = data ? data : [];
+    const productsPagination = dataPagination ? dataPagination : [];
+    const table = useReactTable({
+        data: products,
+        columns: productCollums,
+        getCoreRowModel: getCoreRowModel(),
+        manualPagination: true,
+        getSortedRowModel: getSortedRowModel(),
+        onSortingChange: setSorting,
+        getFilteredRowModel: getFilteredRowModel(),
+        state: {
+            sorting,
+          },
+        
+    });
 
-    const { data: categories } = useQuery<string[]>({
-      queryKey: ["/products/categories"],
-      queryFn: () => findAllCategories()
-    })
-    const { data: manufacturers } = useQuery<string[]>({
-      queryKey: ["products/manufacturers"],
-      queryFn: () => findAllManufactures()
-    })
-
-    const { data: paginationProducts } = useQuery<products[]>({
-      queryKey: ["products", product, category, manufacturer],
-      queryFn: () => findAllProducts(product, category, manufacturer)
-    })
-    const products = data ? data : []
-
-    const mutation = useMutation ({
-      mutationFn: () => create10Products()
-    })
-
-    if(isLoading) return <p>Espere um minuto</p>
-    if(isError) return <NotFound />
-    if(mutation.isPending) return <p>Adicionando produtos</p>
-
+    if (isLoading) return <p>carregando...</p>;
     return (
-      <main className='w-full'>
-        <div className='flex gap-4 w-full items-center justify-between my-10'>
-          <SearchBar />
-          <Select title={category ? category : categoryTitle} page='products'>
+        <div>
+            <div className="flex gap-4 w-full items-center justify-between my-10">
+            <SearchBar />
+            <Select title={categoryTitle} page='products'>
+            <option value='category'>Categorias</option>
             {(categories || []).map((option) => (
               <option key={option} value={option}>
                 {capitalizeFirstLetter(option)}
               </option>
             ))}
             </Select>
-          <Select title={manufacturer ? manufacturer : manufacturerTitle} page='products'>
+          <Select title={filters.manufacturer ? filters.manufacturer : manufacturerTitle} page='products'>
             {(manufacturers || []).map((option) => (
               <option key={option} value={option}>
                 {capitalizeFirstLetter(option)}
@@ -70,28 +84,15 @@ export default function Products() {
             ))}
           </Select>
           <Link to={`/products/${pageNumber}`} className='btn btn-primary'>Limpar</Link >
-          <Button onClick={() => mutation.mutate()} title='Criar 10 produtos aleatórios'/>
-          <Modal />
+          <Button onClick={create10Products} title='Criar 10 produtos aleatórios'/>
+          <PdfButton to={`/productPrint/${location.search}`} />
+            </div>
+            {products.length > 0 ?
+              <TableData table={table}/> : 
+              <p className="m-auto flex items-center justify-center mt-32">Não há nenhum produto</p>
+            }
+            <Pagination data={productsPagination} queryKey="products"/>
+            
         </div>
-        <div className='grid grid-cols-4 gap-4'>
-          {products.map((p) => {
-            return (
-              <div key={p.id} className="card card-body flex flex-col p-2">
-                <span className="card-title">Nome: {p.name}</span>
-                <span>Fabricante: {capitalizeFirstLetter(p.manufacturer)}</span>
-                <span>Categoria: {capitalizeFirstLetter(p.category)}</span>
-                <span>Quantidade: {p.qtd}</span>
-                <span>Preço: {p.price}</span>
-              </div>
-            )
-          })}
-        </div>
-        <Pagination
-          data={paginationProducts || []}
-          queryKey="products"
-        />
-
-    </main>
-    )
-  }
-
+    );
+}

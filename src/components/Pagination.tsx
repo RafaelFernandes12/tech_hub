@@ -8,8 +8,8 @@ interface PaginationProps {
 }
 
 export function Pagination({ data, queryKey }: PaginationProps) {
-  const { n } = getPageParam();
-  const pageNumber = n ? parseInt(n) : 1;
+  const pageNumber = getPageParam();
+
   const location = useLocation();
   const navigate = useNavigate();
   const currentSearchParams = new URLSearchParams(location.search);

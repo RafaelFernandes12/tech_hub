@@ -23,7 +23,6 @@ export async function findAllProducts(name: string | null, category: string | nu
 export async function findOneProduct(id: number){
     return (await axios.get(`/products/${id}`)).data
 }
-
 export async function findAllCategories(){
     return (await axios.get("/products/categories")).data
 }

@@ -12,7 +12,7 @@ export function SearchBar() {
       if (searchTerm) queryParams.set('product', searchTerm);
       else queryParams.delete('product');
 
-      navigate(`/products/1?${queryParams.toString()}`);
+      navigate(`/productsTable/1?${queryParams.toString()}`);
     }
   };
 

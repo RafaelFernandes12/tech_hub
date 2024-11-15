@@ -5,5 +5,6 @@ export function getQueryParams(param: string){
     return searchParams.get(`${param}`)
 }
 export function getPageParam(){
-    return useParams<{ n: string }>()
+    const {n} = useParams<{ n: string }>()
+    return n ? parseInt(n) : 1
 }

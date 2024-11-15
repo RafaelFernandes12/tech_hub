@@ -1,5 +1,4 @@
-
-export interface sellsProps {
+export interface sells {
     id: number
     date: string;
     qtd: number;
